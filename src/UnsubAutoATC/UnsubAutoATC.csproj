@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>UnsubAutoATC</AssemblyName>
+    <RootNamespace>UnsubAutoATC</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Version>1.0.0</Version>
+    <!-- Where vPilot is installed; override with -p:VpilotDir=... -->
+    <VpilotDir Condition="'$(VpilotDir)' == ''">$(LOCALAPPDATA)\vPilot</VpilotDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="RossCarlson.Vatsim.Vpilot.Plugins">
+      <HintPath>$(VpilotDir)\RossCarlson.Vatsim.Vpilot.Plugins.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="UnsubAutoATC.ini" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

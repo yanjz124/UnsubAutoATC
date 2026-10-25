@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Work out version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0-ci.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # vPilot's plugin SDK isn't redistributable, so build against a stub with the same API.
+      - name: Build vPilot SDK stub
+        run: dotnet build ci/PluginsStub/PluginsStub.csproj -c Release -o ci/PluginsStub/out
+
+      - name: Build plugin
+        run: >
+          dotnet build src/UnsubAutoATC/UnsubAutoATC.csproj -c Release
+          -p:VpilotDir=${{ github.workspace }}/ci/PluginsStub/out
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $out = "src/UnsubAutoATC/bin/Release/net472"
+          New-Item -ItemType Directory -Force dist/UnsubAutoATC | Out-Null
+          Copy-Item "$out/UnsubAutoATC.dll", "src/UnsubAutoATC/UnsubAutoATC.ini", README.md, LICENSE dist/UnsubAutoATC
+          if (Test-Path "$out/RossCarlson.Vatsim.Vpilot.Plugins.dll") { throw "SDK stub must not be packaged" }
+          Compress-Archive -Path dist/UnsubAutoATC/* -DestinationPath "dist/UnsubAutoATC-${{ steps.version.outputs.version }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: UnsubAutoATC-${{ steps.version.outputs.version }}
+          path: dist/UnsubAutoATC/
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" "dist/UnsubAutoATC-${{ steps.version.outputs.version }}.zip"
+          --title "UnsubAutoATC $GITHUB_REF_NAME"
+          --generate-notes

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CI-only stand-in for vPilot's RossCarlson.Vatsim.Vpilot.Plugins.dll, which is not
+    redistributed here. It declares only the members UnsubAutoATC uses, with the same
+    assembly name, namespaces and signatures, so the plugin can be built without vPilot
+    installed. The real assembly is not strong-named, so at runtime vPilot's copy binds
+    in its place.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>RossCarlson.Vatsim.Vpilot.Plugins</AssemblyName>
+    <RootNamespace>RossCarlson.Vatsim.Vpilot.Plugins</RootNamespace>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
